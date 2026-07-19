@@ -56,11 +56,13 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** `pnpm test:e2e`.
 - **Learn:** real-browser E2E setup; how it differs from RTL.
 
-### ☐ P0.9 — CI + Chromatic  🙋
-- **Do:** GitHub Actions workflow running `typecheck + lint + test` on PRs; 🙋 Chromatic project + token (repo secret) + workflow publishing stories; capture baseline.
-- **Accept:** a PR shows CI green; Chromatic baseline captured; a deliberate visual change is flagged.
-- **Verify:** open a test PR; view the checks + Chromatic build.
-- **Learn:** CI quality gates; visual-regression review.
+### ☐ P0.9 — CI (GitHub Actions)
+- **Do:** GitHub Actions workflow running `typecheck + lint + test + test:e2e` on PRs to `main` — Node 24 via `.nvmrc`, pnpm 11 via corepack, `playwright install --with-deps chromium` for the E2E job. Uses the built-in `GITHUB_TOKEN`, so there are no secrets to configure.
+- **Accept:** a PR shows the CI checks green; a deliberate failure (e.g. a lint error) blocks the PR.
+- **Verify:** open a test PR; view the checks.
+- **Learn:** CI quality gates; running the toolchain in a clean environment.
+
+> _Chromatic (visual regression) deferred — we'll revisit once the UI has settled. See [`plan.md`](plan.md)._
 
 > **✅ Checkpoint A** — foundation solid, everything green, repo + CI live.
 

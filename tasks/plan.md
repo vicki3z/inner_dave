@@ -18,7 +18,7 @@ P0.1 Git repo ──▶ P0.2 Next.js ──┬─▶ P0.3 Biome
                                   ├─▶ P0.5 Vitest
                                   ├─▶ P0.7 Supabase + Drizzle (+ users, getCurrentUser)
                                   ├─▶ P0.8 Playwright
-                                  └─▶ P0.9 CI + Chromatic
+                                  └─▶ P0.9 CI
                                           │
    (foundation) ───── Checkpoint A ───────┘
         │
@@ -55,9 +55,9 @@ Ordered so each tool builds on the last. Steps marked **🙋 needs you** require
 - **P0.6 Storybook** — set up + one primitive (`Card` or `Chip`) with a light+dark story. *Learn: component-in-isolation workflow.*
 - **P0.7 Supabase + Drizzle** — 🙋 create the Supabase project & get the connection string; then Drizzle config, a `users` table, first migration, a seed script (one user), and the `getCurrentUser()` seam. Ends with `db:studio` showing the seeded user. *Learn: schema → migration → seed, and the auth seam.*
 - **P0.8 Playwright** — config + one E2E asserting the home page loads. *Learn: real-browser E2E setup.*
-- **P0.9 CI + Chromatic** — 🙋 GitHub Actions running `typecheck/lint/test` on PRs; Chromatic project + workflow capturing a baseline. *Learn: CI gates + visual regression.*
+- **P0.9 CI** — GitHub Actions running `typecheck / lint / test / test:e2e` on PRs (Node 24 via `.nvmrc`, pnpm 11 via corepack, Chromium installed for the E2E job). Uses the built-in `GITHUB_TOKEN` — no secrets to configure. *Learn: CI quality gates in a clean environment.* **Chromatic (visual regression) is deferred — we'll revisit once the UI has settled.**
 
-**✅ Checkpoint A — Foundation:** app runs (`pnpm dev`), every tool green, repo pushed, a PR shows CI passing and a Chromatic baseline. *Nothing product-facing yet — this is the runway.*
+**✅ Checkpoint A — Foundation:** app runs (`pnpm dev`), every tool green, repo pushed, a PR shows CI passing. *Nothing product-facing yet — this is the runway.*
 
 ---
 
@@ -95,8 +95,8 @@ Ordered so each tool builds on the last. Steps marked **🙋 needs you** require
 ## Human-in-the-loop steps (🙋)
 - **P0.1** — authorising the push to your GitHub repo.
 - **P0.7** — creating the Supabase project and handing me the connection string (goes in `.env.local`, never committed).
-- **P0.9** — GitHub repo secrets + a Chromatic project token; deciding if CI runs on your account.
+- **P0.9** — none required for basic CI (uses the built-in `GITHUB_TOKEN`). *Chromatic, when we revisit it, will need a project token as a repo secret.*
 - **Deploy** (optional, anytime after Checkpoint B) — connecting the repo to Vercel for a live URL.
 
 ## Definition of done — Milestone 1
-All Phase 0–3 tasks merged; `typecheck + lint + test + test:e2e` green in CI; Chromatic baseline established; the loop is usable on your phone; SPEC §1 success criteria hold on review.
+All Phase 0–3 tasks merged; `typecheck + lint + test + test:e2e` green in CI; the loop is usable on your phone; SPEC §1 success criteria hold on review. *(Chromatic visual regression deferred to a later pass.)*
