@@ -4,7 +4,15 @@ node_modules/
 # Next.js
 .next/
 out/
+build/
 next-env.d.ts
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Certs
+*.pem
 
 # Testing
 test-results/

@@ -14,7 +14,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** `git remote -v` shows origin; `git status` clean; commit visible on GitHub.
 - **Learn:** connecting a local folder to an existing remote; the reconciliation merge.
 
-### ☐ P0.2 — Scaffold Next.js + TypeScript
+### ☑ P0.2 — Scaffold Next.js + TypeScript
 - **Do:** `pnpm` via `corepack enable`; `create-next-app` (App Router, TS strict, src dir, **no ESLint**); trim boilerplate to a minimal home page.
 - **Accept:** `pnpm dev` serves a page at `localhost:3000`; `pnpm typecheck` passes.
 - **Verify:** open the page; run `pnpm typecheck`.
