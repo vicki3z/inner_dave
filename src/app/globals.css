@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/* ---------- Design tokens (single semantic tier) ----------
+   Ported from prototypes/checkin.html. Components reference these via the
+   Tailwind utilities wired in @theme below - never a raw hex. Change the UI
+   later by editing a value here; every utility follows. */
+:root {
+  --ground: #edf1ef;
+  --ground-2: #e2e9e5;
+  --glow: rgba(78, 138, 114, 0.1);
+  --surface: #fafcfb;
+  --surface-2: #f1f5f3;
+  --edge: rgba(35, 46, 43, 0.1);
+  --edge-strong: rgba(35, 46, 43, 0.18);
+  --ink: #232e2b;
+  --ink-soft: #54645e;
+  --ink-faint: #8a9a93;
+  --accent: #47836b;
+  --accent-ink: #2c5945;
+  --accent-soft: #dbe9e1;
+  --warm: #c9a96b;
+  --tint-pleasant: #cfe3d6;
+  --tint-neutral: #dbe1de;
+  --tint-heavier: #e8dac6;
+  --shadow:
+    0 1px 2px rgba(30, 45, 40, 0.05), 0 12px 32px -12px rgba(30, 45, 40, 0.16);
+  --shadow-soft:
+    0 1px 2px rgba(30, 45, 40, 0.04), 0 6px 18px -10px rgba(30, 45, 40, 0.12);
+  --serif:
+    "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia,
+    "Times New Roman", serif;
+  --rounded:
+    ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --r-lg: 22px;
+  --r-md: 16px;
+  --r-sm: 11px;
+  --step: 0.28s cubic-bezier(0.22, 0.68, 0.32, 1);
+}
+
+/* Follow the OS preference by default. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #12181a;
+    --ground-2: #0c1112;
+    --glow: rgba(121, 182, 155, 0.11);
+    --surface: #1a2321;
+    --surface-2: #212b29;
+    --edge: rgba(206, 224, 216, 0.1);
+    --edge-strong: rgba(206, 224, 216, 0.18);
+    --ink: #e6ece8;
+    --ink-soft: #9db0a9;
+    --ink-faint: #6d817a;
+    --accent: #79b69b;
+    --accent-ink: #a9d8c4;
+    --accent-soft: rgba(121, 182, 155, 0.15);
+    --warm: #d3b583;
+    --tint-pleasant: rgba(121, 182, 155, 0.26);
+    --tint-neutral: rgba(160, 180, 174, 0.16);
+    --tint-heavier: rgba(201, 162, 111, 0.22);
+    --shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.55);
+    --shadow-soft:
+      0 1px 2px rgba(0, 0, 0, 0.28), 0 8px 22px -12px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* An explicit data-theme choice overrides the OS preference. */
+:root[data-theme="light"] {
+  --ground: #edf1ef;
+  --ground-2: #e2e9e5;
+  --glow: rgba(78, 138, 114, 0.1);
+  --surface: #fafcfb;
+  --surface-2: #f1f5f3;
+  --edge: rgba(35, 46, 43, 0.1);
+  --edge-strong: rgba(35, 46, 43, 0.18);
+  --ink: #232e2b;
+  --ink-soft: #54645e;
+  --ink-faint: #8a9a93;
+  --accent: #47836b;
+  --accent-ink: #2c5945;
+  --accent-soft: #dbe9e1;
+  --warm: #c9a96b;
+  --tint-pleasant: #cfe3d6;
+  --tint-neutral: #dbe1de;
+  --tint-heavier: #e8dac6;
+  --shadow:
+    0 1px 2px rgba(30, 45, 40, 0.05), 0 12px 32px -12px rgba(30, 45, 40, 0.16);
+  --shadow-soft:
+    0 1px 2px rgba(30, 45, 40, 0.04), 0 6px 18px -10px rgba(30, 45, 40, 0.12);
+}
+
+:root[data-theme="dark"] {
+  --ground: #12181a;
+  --ground-2: #0c1112;
+  --glow: rgba(121, 182, 155, 0.11);
+  --surface: #1a2321;
+  --surface-2: #212b29;
+  --edge: rgba(206, 224, 216, 0.1);
+  --edge-strong: rgba(206, 224, 216, 0.18);
+  --ink: #e6ece8;
+  --ink-soft: #9db0a9;
+  --ink-faint: #6d817a;
+  --accent: #79b69b;
+  --accent-ink: #a9d8c4;
+  --accent-soft: rgba(121, 182, 155, 0.15);
+  --warm: #d3b583;
+  --tint-pleasant: rgba(121, 182, 155, 0.26);
+  --tint-neutral: rgba(160, 180, 174, 0.16);
+  --tint-heavier: rgba(201, 162, 111, 0.22);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.55);
+  --shadow-soft:
+    0 1px 2px rgba(0, 0, 0, 0.28), 0 8px 22px -12px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Tailwind theme wiring ----------
+   `inline` makes each utility emit the runtime var() directly, so classes like
+   `bg-surface text-ink rounded-md font-serif` follow the active theme with no
+   rebuild. */
+@theme inline {
+  --color-ground: var(--ground);
+  --color-ground-2: var(--ground-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-glow: var(--glow);
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-warm: var(--warm);
+
+  --color-tint-pleasant: var(--tint-pleasant);
+  --color-tint-neutral: var(--tint-neutral);
+  --color-tint-heavier: var(--tint-heavier);
+
+  --radius-lg: var(--r-lg);
+  --radius-md: var(--r-md);
+  --radius-sm: var(--r-sm);
+
+  --shadow-elevated: var(--shadow);
+  --shadow-soft: var(--shadow-soft);
+
+  --font-serif: var(--serif);
+  --font-rounded: var(--rounded);
+}
+
+/* ---------- Base ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--rounded);
+  color: var(--ink);
+  line-height: 1.5;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--glow), transparent 60%),
+    linear-gradient(178deg, var(--ground) 0%, var(--ground-2) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
