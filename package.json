@@ -16,7 +16,9 @@
     "format": "biome format --write",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "next": "16.2.10",
@@ -26,12 +28,18 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.4",
     "@playwright/test": "1.61.1",
+    "@storybook/addon-a11y": "^10.5.2",
+    "@storybook/addon-docs": "^10.5.2",
+    "@storybook/addon-themes": "^10.5.2",
+    "@storybook/nextjs-vite": "^10.5.2",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "storybook": "^10.5.2",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
+    "vite": "^8.1.5",
     "vitest": "4.1.10"
   }
 }

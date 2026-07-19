@@ -38,7 +38,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** `pnpm test`; break the util, confirm red.
 - **Learn:** Vitest config; the unit-test loop.
 
-### ☐ P0.6 — Storybook (+ first primitive)
+### ☑ P0.6 — Storybook (+ first primitive)
 - **Do:** set up Storybook; build one token-based primitive (`Card` or `Chip`) with a story rendering it in **light and dark**.
 - **Accept:** `pnpm storybook` shows the primitive in both themes.
 - **Verify:** open Storybook; switch theme in the story.
