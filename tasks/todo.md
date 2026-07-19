@@ -26,7 +26,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** run both; introduce a bad format, confirm `format` fixes it.
 - **Learn:** one fast tool replacing ESLint + Prettier.
 
-### ☐ P0.4 — Tailwind + our design tokens
+### ☑ P0.4 — Tailwind + our design tokens
 - **Do:** install Tailwind; port the prototype's CSS-variable tokens into `globals.css`; map them into the Tailwind theme; wire serif/rounded font stacks; set the light/dark mechanism (`prefers-color-scheme` + `data-theme` override). Add a throwaway `/_swatch` route.
 - **Accept:** `/_swatch` shows the palette, both fonts, and both themes correctly.
 - **Verify:** toggle theme on `/_swatch`; colours/fonts match the prototype.

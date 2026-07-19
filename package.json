@@ -26,9 +26,11 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.4",
     "@playwright/test": "1.61.1",
+    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "tailwindcss": "4.3.3",
     "typescript": "^5",
     "vitest": "4.1.10"
   }
