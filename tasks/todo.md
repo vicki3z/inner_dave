@@ -7,7 +7,7 @@ See [`tasks/plan.md`](plan.md) for the phases, dependency graph, and checkpoints
 
 ## Phase 0 — Foundation
 
-### ☐ P0.1 — Wire up the Git repo  🙋
+### ☑ P0.1 — Wire up the Git repo  🙋
 Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have.
 - **Do:** `git init`; add `origin`; `git fetch`; merge any remote history (`--allow-unrelated-histories`); add `.gitignore` (`node_modules`, `.next`, `.env*`, `test-results`, `storybook-static`); commit `docs/`, `SPEC.md`, `prototypes/`, `tasks/`; push `-u origin main`.
 - **Accept:** remote tracks `main`; existing docs/spec/prototype are on GitHub; tree is clean.
