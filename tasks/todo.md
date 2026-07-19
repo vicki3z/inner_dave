@@ -32,7 +32,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** toggle theme on `/_swatch`; colours/fonts match the prototype.
 - **Learn:** tokens → Tailwind theme wiring; theme override precedence.
 
-### ☐ P0.5 — Vitest (unit)
+### ☑ P0.5 — Vitest (unit)
 - **Do:** set up Vitest; write one real test for a `lib/utils/dates.ts` helper (e.g. `localDayString`).
 - **Accept:** `pnpm test` green with ≥1 meaningful test.
 - **Verify:** `pnpm test`; break the util, confirm red.
