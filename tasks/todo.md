@@ -50,7 +50,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** run migrate/seed/studio; a tiny script logs `getCurrentUser()`.
 - **Learn:** schema → migration → seed; the single-user seam that becomes real auth later.
 
-### ☐ P0.8 — Playwright (E2E)
+### ☑ P0.8 — Playwright (E2E)
 - **Do:** set up Playwright; one test asserting the home page loads and shows expected text.
 - **Accept:** `pnpm test:e2e` green against the dev/preview server.
 - **Verify:** `pnpm test:e2e`.
