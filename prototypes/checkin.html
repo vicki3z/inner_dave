@@ -1,0 +1,836 @@
+<title>Inner DAVE — prototype</title>
+<style>
+  /* ---------- Tokens ---------- */
+  :root {
+    --ground:#EDF1EF; --ground-2:#E2E9E5; --glow:rgba(78,138,114,0.10);
+    --surface:#FAFCFB; --surface-2:#F1F5F3; --edge:rgba(35,46,43,0.10); --edge-strong:rgba(35,46,43,0.18);
+    --ink:#232E2B; --ink-soft:#54645E; --ink-faint:#8A9A93;
+    --accent:#47836B; --accent-ink:#2C5945; --accent-soft:#DBE9E1; --warm:#C9A96B;
+    --tint-pleasant:#CFE3D6; --tint-neutral:#DBE1DE; --tint-heavier:#E8DAC6;
+    --shadow:0 1px 2px rgba(30,45,40,0.05),0 12px 32px -12px rgba(30,45,40,0.16);
+    --shadow-soft:0 1px 2px rgba(30,45,40,0.04),0 6px 18px -10px rgba(30,45,40,0.12);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Charter,Georgia,"Times New Roman",serif;
+    --rounded:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --r-lg:22px; --r-md:16px; --r-sm:11px; --step:0.28s cubic-bezier(0.22,0.68,0.32,1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#12181A; --ground-2:#0C1112; --glow:rgba(121,182,155,0.11);
+      --surface:#1A2321; --surface-2:#212B29; --edge:rgba(206,224,216,0.10); --edge-strong:rgba(206,224,216,0.18);
+      --ink:#E6ECE8; --ink-soft:#9DB0A9; --ink-faint:#6D817A;
+      --accent:#79B69B; --accent-ink:#A9D8C4; --accent-soft:rgba(121,182,155,0.15); --warm:#D3B583;
+      --tint-pleasant:rgba(121,182,155,0.26); --tint-neutral:rgba(160,180,174,0.16); --tint-heavier:rgba(201,162,111,0.22);
+      --shadow:0 1px 2px rgba(0,0,0,0.30),0 16px 40px -16px rgba(0,0,0,0.55);
+      --shadow-soft:0 1px 2px rgba(0,0,0,0.28),0 8px 22px -12px rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground:#EDF1EF; --ground-2:#E2E9E5; --glow:rgba(78,138,114,0.10);
+    --surface:#FAFCFB; --surface-2:#F1F5F3; --edge:rgba(35,46,43,0.10); --edge-strong:rgba(35,46,43,0.18);
+    --ink:#232E2B; --ink-soft:#54645E; --ink-faint:#8A9A93;
+    --accent:#47836B; --accent-ink:#2C5945; --accent-soft:#DBE9E1; --warm:#C9A96B;
+    --tint-pleasant:#CFE3D6; --tint-neutral:#DBE1DE; --tint-heavier:#E8DAC6;
+    --shadow:0 1px 2px rgba(30,45,40,0.05),0 12px 32px -12px rgba(30,45,40,0.16);
+    --shadow-soft:0 1px 2px rgba(30,45,40,0.04),0 6px 18px -10px rgba(30,45,40,0.12);
+  }
+  :root[data-theme="dark"] {
+    --ground:#12181A; --ground-2:#0C1112; --glow:rgba(121,182,155,0.11);
+    --surface:#1A2321; --surface-2:#212B29; --edge:rgba(206,224,216,0.10); --edge-strong:rgba(206,224,216,0.18);
+    --ink:#E6ECE8; --ink-soft:#9DB0A9; --ink-faint:#6D817A;
+    --accent:#79B69B; --accent-ink:#A9D8C4; --accent-soft:rgba(121,182,155,0.15); --warm:#D3B583;
+    --tint-pleasant:rgba(121,182,155,0.26); --tint-neutral:rgba(160,180,174,0.16); --tint-heavier:rgba(201,162,111,0.22);
+    --shadow:0 1px 2px rgba(0,0,0,0.30),0 16px 40px -16px rgba(0,0,0,0.55);
+    --shadow-soft:0 1px 2px rgba(0,0,0,0.28),0 8px 22px -12px rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: var(--rounded); color: var(--ink); line-height: 1.5;
+    background:
+      radial-gradient(120% 80% at 50% -10%, var(--glow), transparent 60%),
+      linear-gradient(178deg, var(--ground) 0%, var(--ground-2) 100%);
+    background-attachment: fixed; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .app { max-width: 440px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column;
+    padding: max(14px, env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom)); }
+  button { font-family: inherit; cursor: pointer; color: inherit; }
+  input { font-family: inherit; }
+  :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+  :focus:not(:focus-visible) { outline: none; }
+
+  /* topbar */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px 10px; }
+  .wordmark { font-family: var(--serif); font-size: 19px; display: inline-flex; align-items: center; gap: 9px; }
+  .wordmark::before { content: ""; width: 15px; height: 15px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, var(--warm), var(--accent) 78%); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .theme-toggle { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--edge);
+    background: var(--surface); color: var(--ink-soft); font-size: 16px; display: grid; place-items: center;
+    box-shadow: var(--shadow-soft); transition: transform var(--step); }
+  .theme-toggle:active { transform: scale(0.92); }
+
+  .hint { background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r-md);
+    padding: 13px 15px; margin-bottom: 16px; box-shadow: var(--shadow-soft); font-size: 13px; color: var(--ink-soft);
+    line-height: 1.55; position: relative; }
+  .hint strong { color: var(--ink); }
+  .hint-close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0;
+    background: transparent; color: var(--ink-faint); font-size: 17px; border-radius: 8px; line-height: 1; }
+
+  /* stage / views / steps */
+  .stage { flex: 1; display: flex; flex-direction: column; }
+  .view { display: none; flex: 1; flex-direction: column; }
+  .view.is-active { display: flex; }
+  .step { display: none; flex-direction: column; flex: 1; }
+  .step.is-active { display: flex; animation: rise var(--step) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+
+  .eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint);
+    font-weight: 600; margin: 2px 0 0; display: flex; align-items: center; gap: 9px; }
+  .dots { display: inline-flex; gap: 5px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--edge-strong); }
+  .dots i.on { background: var(--accent); }
+  .prompt { font-family: var(--serif); font-weight: 400; font-size: clamp(26px, 7.6vw, 32px); line-height: 1.16;
+    letter-spacing: -0.01em; margin: 13px 0 20px; text-wrap: balance; }
+  .sub-lead { color: var(--ink-soft); font-size: 14.5px; margin: -10px 0 20px; }
+
+  .back { align-self: flex-start; margin-top: 16px; background: transparent; border: 0; color: var(--ink-soft);
+    font-size: 14px; font-weight: 500; padding: 8px 4px; }
+  .back:hover { color: var(--ink); }
+
+  .btn { border-radius: var(--r-md); padding: 15px; font-size: 15.5px; font-weight: 600;
+    border: 1px solid var(--edge-strong); background: var(--surface); color: var(--ink);
+    transition: transform var(--step), background var(--step); }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow); }
+  :root[data-theme="dark"] .btn.primary { color: #0E1D17; }
+  @media (prefers-color-scheme: dark) { .btn.primary { color: #0E1D17; } }
+  .btn.ghost { background: transparent; }
+  .row-actions { display: flex; gap: 11px; margin-top: auto; padding-top: 22px; }
+  .row-actions .btn { flex: 1; }
+
+  /* Today home */
+  .home-greet { font-family: var(--serif); font-size: 27px; margin: 6px 0 2px; }
+  .home-date { color: var(--ink-faint); font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .checkin-card { margin-top: 22px; background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r-lg);
+    padding: 24px 22px; box-shadow: var(--shadow); text-align: center; }
+  .checkin-card .cloud { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 14px;
+    background: radial-gradient(circle at 36% 32%, var(--warm), var(--accent) 80%); box-shadow: 0 0 0 6px var(--accent-soft); }
+  .checkin-card h2 { font-family: var(--serif); font-weight: 400; font-size: 23px; margin: 0 0 6px; }
+  .checkin-card p { color: var(--ink-soft); font-size: 14px; margin: 0 0 20px; }
+  .checkin-card .btn { width: 100%; }
+
+  .card { background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r-lg);
+    padding: 18px 19px; box-shadow: var(--shadow-soft); margin-top: 14px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.13em; font-weight: 600;
+    color: var(--ink-faint); margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; }
+  .card-label .edit { color: var(--accent-ink); text-transform: none; letter-spacing: 0; font-size: 13px; background: none; border: 0; font-weight: 600; }
+  .weather-read { font-family: var(--serif); font-size: 22px; line-height: 1.28; margin: 0; }
+  .weather-combo { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.11em; font-weight: 600; color: var(--accent-ink); margin: 0 0 8px; }
+  .weather-note { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 15px; margin: 12px 0 0; }
+
+  .mini-list { display: flex; flex-direction: column; gap: 9px; }
+  .mini-item { display: flex; align-items: center; gap: 10px; font-size: 14.5px; }
+  .mini-item .tick { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none;
+    background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; }
+  .mini-item .tick.off { background: transparent; border: 1.5px dashed var(--edge-strong); color: transparent; }
+  .mini-item .t { color: var(--ink-faint); font-size: 12.5px; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .mini-item .muted { color: var(--ink-faint); }
+  .food-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .fchip { background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; }
+
+  /* energy options */
+  .energy-list { display: flex; flex-direction: column; gap: 11px; }
+  .energy { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; background: var(--surface);
+    border: 1px solid var(--edge); border-radius: var(--r-md); padding: 17px 18px; box-shadow: var(--shadow-soft);
+    transition: transform var(--step), border-color var(--step); }
+  .energy:active { transform: scale(0.985); }
+  .energy .name { font-size: 18px; font-weight: 600; flex: 1; }
+  .energy .meaning { font-size: 13px; color: var(--ink-faint); }
+  .gauge { display: inline-flex; gap: 3px; align-items: flex-end; height: 20px; }
+  .gauge i { width: 4px; border-radius: 2px; background: var(--edge-strong); }
+  .gauge i:nth-child(1){height:8px;} .gauge i:nth-child(2){height:12px;} .gauge i:nth-child(3){height:16px;} .gauge i:nth-child(4){height:20px;}
+  .energy[data-fill="4"] .gauge i, .energy[data-fill="3"] .gauge i:nth-child(-n+3),
+  .energy[data-fill="2"] .gauge i:nth-child(-n+2), .energy[data-fill="1"] .gauge i:nth-child(-n+1) { background: var(--accent); }
+
+  /* texture grid */
+  .texture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .texture { background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r-md); padding: 15px;
+    text-align: left; box-shadow: var(--shadow-soft); display: flex; flex-direction: column; gap: 3px; min-height: 76px;
+    justify-content: center; transition: transform var(--step), border-color var(--step); }
+  .texture:active { transform: scale(0.97); }
+  .texture .name { font-size: 17px; font-weight: 600; }
+  .texture .meaning { font-size: 12.5px; color: var(--ink-faint); line-height: 1.35; }
+
+  /* state read */
+  .state-combo { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; color: var(--accent-ink); margin-top: 6px; }
+  .state-read { font-family: var(--serif); font-size: clamp(27px,8vw,33px); line-height: 1.18; margin: 12px 0 4px; text-wrap: balance; }
+  .whathappened { margin-top: 24px; }
+  .whathappened label { display: block; font-size: 14px; color: var(--ink-soft); margin-bottom: 9px; }
+  .field { width: 100%; font-family: var(--serif); font-size: 17px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--edge); border-radius: var(--r-md); padding: 14px 15px; box-shadow: var(--shadow-soft); }
+  .field::placeholder { color: var(--ink-faint); font-style: italic; }
+  .field:focus { border-color: var(--accent); outline: none; }
+
+  /* meds */
+  .group-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; color: var(--ink-faint); margin: 18px 0 9px; }
+  .med { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--edge);
+    border-radius: var(--r-md); padding: 6px 10px 6px 14px; margin-bottom: 9px; box-shadow: var(--shadow-soft); }
+  .med-main { display: flex; align-items: center; gap: 13px; flex: 1; min-width: 0; background: transparent; border: 0; text-align: left; padding: 8px 0; }
+  .med-main:active { transform: scale(0.99); }
+  .med .box { width: 24px; height: 24px; border-radius: 8px; border: 1.5px solid var(--edge-strong); flex: none;
+    display: grid; place-items: center; color: transparent; font-size: 14px; transition: all var(--step); }
+  .med.taken .box { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .med.taken .box { color: #0E1D17; }
+  @media (prefers-color-scheme: dark) { .med.taken .box { color: #0E1D17; } }
+  .med .mname { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .med.taken .mname { color: var(--ink-soft); }
+  .med-time { font-family: var(--rounded); font-size: 13.5px; font-weight: 600; color: var(--accent-ink); background: var(--surface-2);
+    border: 1px solid var(--edge); border-radius: 9px; padding: 7px 8px; font-variant-numeric: tabular-nums; flex: none; }
+  .med-time:focus { border-color: var(--accent); outline: none; }
+  .time-field { font-family: var(--rounded); font-size: 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--edge);
+    border-radius: var(--r-md); padding: 13px 11px; box-shadow: var(--shadow-soft); flex: none; }
+  .time-field:focus { border-color: var(--accent); outline: none; }
+  .time-field.hide { display: none; }
+
+  /* food */
+  .addbar { display: flex; gap: 9px; margin-bottom: 14px; }
+  .addbar .field { flex: 1; font-family: var(--rounded); font-size: 15.5px; }
+  .addbar button { border: 1px solid var(--edge-strong); background: var(--surface); border-radius: var(--r-md); padding: 0 16px; font-weight: 600; font-size: 15px; }
+  .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .suggest button { background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px; padding: 8px 13px; font-size: 13.5px; color: var(--ink-soft); font-weight: 500; }
+  .food-live { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; min-height: 20px; }
+  .food-live .fchip { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); font-weight: 600; }
+  .food-live .fchip button { border: 0; background: transparent; color: inherit; font-size: 15px; line-height: 1; padding: 0; opacity: 0.7; }
+  .empty-hint { color: var(--ink-faint); font-size: 13.5px; font-style: italic; margin-top: 14px; }
+
+  /* done */
+  .done { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; }
+  .done .mark { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 8px; background: var(--accent-soft); color: var(--accent-ink); font-size: 26px; }
+  .done h2 { font-family: var(--serif); font-weight: 400; font-size: 29px; margin: 0; }
+  .done p { color: var(--ink-soft); font-size: 15px; margin: 2px 0 22px; }
+
+  /* Plan */
+  .plan-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+  .lane { margin-top: 20px; }
+  .lane h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.13em; color: var(--ink-faint); font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .lane h3 .ic { font-size: 13px; }
+  .task { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--edge);
+    border-radius: var(--r-md); padding: 13px 14px; margin-bottom: 8px; box-shadow: var(--shadow-soft); transition: transform var(--step); }
+  .task:active { transform: scale(0.99); }
+  .task .box { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--edge-strong); flex: none;
+    display: grid; place-items: center; color: transparent; font-size: 13px; transition: all var(--step); }
+  .task.done .box { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .task.done .box { color: #0E1D17; }
+  @media (prefers-color-scheme: dark) { .task.done .box { color: #0E1D17; } }
+  .task .ttext { flex: 1; font-size: 15px; }
+  .task.done .ttext { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--edge-strong); }
+  .task .time { font-size: 12.5px; color: var(--accent-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .task .tmrw { border: 0; background: transparent; color: var(--ink-faint); font-size: 12px; padding: 4px 6px; }
+  .task .tmrw:hover { color: var(--ink-soft); }
+  .plan-add { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--edge); }
+  .lane-pick { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+  .lane-pick button { border: 1px solid var(--edge-strong); background: transparent; border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .lane-pick button.on { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .note-foot { color: var(--ink-faint); font-size: 12.5px; margin-top: 18px; font-style: italic; line-height: 1.5; }
+
+  /* Month */
+  .month-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+  .month-head h2 { font-family: var(--serif); font-weight: 400; font-size: 25px; margin: 0; }
+  .month-head .yr { color: var(--ink-faint); font-size: 14px; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal .dow { text-align: center; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 700; padding-bottom: 4px; }
+  .cell { aspect-ratio: 1; border-radius: 11px; border: 1px solid transparent; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; font-size: 13.5px; font-variant-numeric: tabular-nums;
+    background: var(--surface-2); color: var(--ink-soft); position: relative; }
+  .cell.empty { background: transparent; color: var(--ink-faint); opacity: 0.55; }
+  .cell.blank { background: transparent; border: 0; }
+  .cell.has { color: var(--ink); font-weight: 600; box-shadow: var(--shadow-soft); }
+  .cell.pleasant { background: var(--tint-pleasant); }
+  .cell.neutral { background: var(--tint-neutral); }
+  .cell.heavier { background: var(--tint-heavier); }
+  .cell.today { border-color: var(--accent); border-width: 2px; }
+  .cell .md { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-ink); position: absolute; bottom: 7px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; font-size: 12.5px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; }
+  .legend .pleasant { background: var(--tint-pleasant); } .legend .neutral { background: var(--tint-neutral); } .legend .heavier { background: var(--tint-heavier); }
+  .legend .md { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ink); }
+  .month-note { color: var(--ink-faint); font-size: 12.5px; margin-top: 12px; font-style: italic; }
+
+  /* Patterns (reflections) */
+  .refl-intro { font-size: 14px; color: var(--ink-soft); margin: 4px 0 18px; line-height: 1.55; }
+  .voice-toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px; padding: 4px; gap: 3px; margin-bottom: 20px; align-self: flex-start; }
+  .voice-toggle button { border: 0; background: transparent; padding: 8px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .voice-toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-soft); }
+  .refl-card { background: var(--surface); border: 1px solid var(--edge); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .refl-card .tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.13em; font-weight: 600; color: var(--ink-faint); margin-bottom: 12px; }
+  .refl-card .tag.good { color: var(--accent-ink); }
+  .refl-text { font-family: var(--serif); font-size: 20px; line-height: 1.4; margin: 0 0 18px; text-wrap: pretty; }
+  .evidence { margin: 2px 0 16px; border-top: 1px solid var(--edge); padding-top: 14px; }
+  .ev-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .ev-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; color: var(--ink-faint); }
+  .ev-toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--edge); border-radius: 999px; padding: 3px; gap: 2px; }
+  .ev-toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+  .ev-toggle button.on { background: var(--surface); color: var(--ink-soft); box-shadow: var(--shadow-soft); }
+  .ev-day { display: flex; gap: 12px; padding: 5px 0; }
+  .ev-day .d { font-size: 12.5px; font-weight: 700; color: var(--accent-ink); min-width: 32px; padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .ev-day .n { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-soft); line-height: 1.42; }
+  .ev-summary { font-family: var(--serif); font-style: italic; font-size: 15.5px; color: var(--ink-soft); line-height: 1.46; padding: 2px 0; margin: 0; }
+  .ev-note { font-size: 11.5px; color: var(--ink-faint); margin: 9px 0 0; }
+  .refl-afford { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mini { border: 1px solid var(--edge-strong); background: transparent; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--ink-soft); transition: transform var(--step); }
+  .mini:active { transform: scale(0.95); }
+  .mini.sel { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .mini.dismiss { color: var(--ink-faint); font-weight: 500; margin-left: auto; }
+  .refl-empty { color: var(--ink-faint); font-size: 14px; font-style: italic; }
+
+  /* tabbar */
+  .tabbar { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--edge); border-radius: 999px; padding: 5px; margin-top: 16px; box-shadow: var(--shadow-soft); }
+  .tabbar button { flex: 1; border: 0; background: transparent; padding: 10px 4px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); transition: color var(--step), background var(--step); }
+  .tabbar button.on { background: var(--accent-soft); color: var(--accent-ink); }
+
+  /* sheet */
+  .sheet-scrim { position: fixed; inset: 0; background: rgba(10,16,14,0.42); backdrop-filter: blur(2px); display: none; align-items: flex-end; justify-content: center; z-index: 20; }
+  .sheet-scrim.open { display: flex; animation: fade var(--step) both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .sheet { background: var(--surface); width: 100%; max-width: 440px; border-radius: 22px 22px 0 0; padding: 22px 20px calc(24px + env(safe-area-inset-bottom)); box-shadow: var(--shadow); animation: slideup var(--step) both; }
+  @keyframes slideup { from { transform: translateY(20px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+  .sheet .sheet-combo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.11em; font-weight: 600; color: var(--accent-ink); margin: 0 0 4px; }
+  .sheet .sheet-read { font-family: var(--serif); font-size: 24px; line-height: 1.25; margin: 0 0 4px; }
+  .sheet .sheet-date { color: var(--ink-faint); font-size: 13px; margin: 0 0 16px; }
+  .sheet-sec { border-top: 1px solid var(--edge); padding-top: 12px; margin-top: 14px; }
+  .sheet-sec .card-label { margin-bottom: 8px; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <span class="wordmark">Inner DAVE</span>
+    <button class="theme-toggle" id="themeBtn" aria-label="Toggle light or dark">◐</button>
+  </header>
+
+  <div class="hint" id="hint">
+    <button class="hint-close" id="hintClose" aria-label="Dismiss">×</button>
+    <strong>Prototype — live in it for a bit.</strong> Do a full check-in (Today → Check in), poke the <em>Plan</em> and <em>Month</em> tabs, read a <em>Pattern</em>. Nothing's saved. The question to hold: <em>is this the shape of the thing you actually want?</em>
+  </div>
+
+  <main class="stage">
+    <!-- ============ TODAY ============ -->
+    <section class="view is-active" data-view="today">
+
+      <!-- home -->
+      <div class="step is-active" data-step="home" id="todayHome"></div>
+
+      <!-- energy -->
+      <div class="step" data-step="energy">
+        <p class="eyebrow">Checking in <span class="dots"><i class="on"></i><i></i><i></i><i></i><i></i></span></p>
+        <h1 class="prompt">How much energy right now?</h1>
+        <div class="energy-list">
+          <button class="energy" data-energy="A lot" data-fill="4"><span class="name">A lot</span><span class="meaning">plenty in the tank</span><span class="gauge"><i></i><i></i><i></i><i></i></span></button>
+          <button class="energy" data-energy="Some" data-fill="3"><span class="name">Some</span><span class="meaning">a normal amount</span><span class="gauge"><i></i><i></i><i></i><i></i></span></button>
+          <button class="energy" data-energy="Low" data-fill="2"><span class="name">Low</span><span class="meaning">running slow</span><span class="gauge"><i></i><i></i><i></i><i></i></span></button>
+          <button class="energy" data-energy="None" data-fill="1"><span class="name">None</span><span class="meaning">near empty</span><span class="gauge"><i></i><i></i><i></i><i></i></span></button>
+        </div>
+        <button class="back" data-back="home" type="button">← back</button>
+      </div>
+
+      <!-- texture -->
+      <div class="step" data-step="texture">
+        <p class="eyebrow">Checking in <span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></p>
+        <h1 class="prompt">And what's it feel like?</h1>
+        <div class="texture-grid" id="textureGrid"></div>
+        <button class="back" data-back="energy" type="button">← energy</button>
+      </div>
+
+      <!-- state + journal -->
+      <div class="step" data-step="state">
+        <p class="eyebrow">Checking in <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></p>
+        <p class="state-combo" id="stateCombo"></p>
+        <p class="state-read" id="stateRead"></p>
+        <div class="whathappened">
+          <label id="whatLabel" for="whatInput">What happened just before this?</label>
+          <input id="whatInput" class="field" type="text" placeholder="one line, or skip" autocomplete="off">
+        </div>
+        <div class="row-actions">
+          <button class="btn ghost" data-back="texture" type="button">← texture</button>
+          <button class="btn primary" data-go="meds" type="button">Continue</button>
+        </div>
+      </div>
+
+      <!-- meds -->
+      <div class="step" data-step="meds">
+        <p class="eyebrow">Checking in <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></p>
+        <h1 class="prompt">Anything taken?</h1>
+        <p class="sub-lead">Tap what you've had. Nothing's expected — blanks are fine.</p>
+        <div id="medsList"></div>
+        <div class="addbar" style="margin-top:4px">
+          <input id="medInput" class="field" type="text" placeholder="add a supplement…" autocomplete="off">
+          <input id="medTime" class="time-field" type="time" aria-label="time taken">
+          <button id="medAdd" type="button">Add</button>
+        </div>
+        <div class="row-actions">
+          <button class="btn ghost" data-go="food" type="button">Skip</button>
+          <button class="btn primary" data-go="food" type="button">Continue</button>
+        </div>
+      </div>
+
+      <!-- food -->
+      <div class="step" data-step="food">
+        <p class="eyebrow">Checking in <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></p>
+        <h1 class="prompt">Eaten anything?</h1>
+        <p class="sub-lead">Just jot what — no numbers, no judgement.</p>
+        <div class="addbar">
+          <input id="foodInput" class="field" type="text" placeholder="add anything…" autocomplete="off">
+          <button id="foodAdd" type="button">Add</button>
+        </div>
+        <div class="suggest" id="foodSuggest"></div>
+        <div class="food-live" id="foodLive"></div>
+        <div class="row-actions">
+          <button class="btn ghost" data-go="done" type="button">Skip</button>
+          <button class="btn primary" data-go="done" type="button">Done</button>
+        </div>
+      </div>
+
+      <!-- done -->
+      <div class="step" data-step="done">
+        <div class="done">
+          <div class="mark">✓</div>
+          <h2>That's it. Nice one.</h2>
+          <p>Nothing to catch up on. Come back whenever.</p>
+          <button class="btn primary" data-back="home" type="button" style="max-width:220px">See today</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PLAN ============ -->
+    <section class="view" data-view="plan">
+      <div class="plan-head">
+        <h1 class="prompt" style="margin:6px 0 0">What's the shape of today?</h1>
+      </div>
+      <p class="sub-lead" id="planDate" style="margin-top:10px"></p>
+      <div id="lanes"></div>
+      <div class="plan-add">
+        <div class="lane-pick" id="lanePick">
+          <button data-lane="morning" class="on">Morning</button>
+          <button data-lane="afternoon">Afternoon</button>
+          <button data-lane="evening">Evening</button>
+          <button data-lane="timed">At a time</button>
+        </div>
+        <div class="addbar">
+          <input id="taskInput" class="field" type="text" placeholder="add something…" autocomplete="off">
+          <input id="taskTime" class="time-field hide" type="time" aria-label="task time">
+          <button id="taskAdd" type="button">Add</button>
+        </div>
+      </div>
+      <p class="note-foot">Nothing here nags. Whether a task gets done quietly tells the Detective about your energy — it never becomes a score.</p>
+    </section>
+
+    <!-- ============ MONTH ============ -->
+    <section class="view" data-view="month">
+      <div class="month-head">
+        <h2 id="monthName"></h2>
+        <span class="yr" id="monthYear"></span>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="legend">
+        <span><i class="pleasant"></i> lighter</span>
+        <span><i class="neutral"></i> neutral</span>
+        <span><i class="heavier"></i> heavier</span>
+        <span><i class="md"></i> meds taken</span>
+      </div>
+      <p class="month-note">Colour is the day's texture, not a grade — there are no good or bad days here. Tap any day to look back.</p>
+    </section>
+
+    <!-- ============ PATTERNS ============ -->
+    <section class="view" data-view="patterns">
+      <p class="eyebrow">The Detective</p>
+      <p class="refl-intro">These only surface once you've a few days logged — always tentative, never a scorecard. Flip the voice to compare:</p>
+      <div class="voice-toggle" role="group" aria-label="Reflection voice">
+        <button data-voice="warm" class="on">Warm</button>
+        <button data-voice="minimal">Minimal</button>
+      </div>
+      <div class="refl-card">
+        <p class="tag">Something I noticed</p>
+        <p class="refl-text" id="reflCo"></p>
+        <div class="evidence" data-ev="co">
+          <div class="ev-head"><span class="ev-label">From those days</span>
+            <div class="ev-toggle" role="group" aria-label="Journal view"><button type="button" data-ev-mode="words" class="on">Their words</button><button type="button" data-ev-mode="summary">Summary</button></div>
+          </div>
+          <div class="ev-body"></div>
+        </div>
+        <div class="refl-afford"><button class="mini" type="button">Rings true</button><button class="mini" type="button">Not really</button><button class="mini" type="button">Not sure</button><button class="mini dismiss" type="button">Not for me</button></div>
+      </div>
+      <div class="refl-card">
+        <p class="tag good">Worth knowing</p>
+        <p class="refl-text" id="reflPos"></p>
+        <div class="evidence" data-ev="pos">
+          <div class="ev-head"><span class="ev-label">From those days</span>
+            <div class="ev-toggle" role="group" aria-label="Journal view"><button type="button" data-ev-mode="words" class="on">Their words</button><button type="button" data-ev-mode="summary">Summary</button></div>
+          </div>
+          <div class="ev-body"></div>
+        </div>
+        <div class="refl-afford"><button class="mini" type="button">Rings true</button><button class="mini" type="button">Not really</button><button class="mini" type="button">Not sure</button></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Sections">
+    <button data-tab="today" class="on">Today</button>
+    <button data-tab="plan">Plan</button>
+    <button data-tab="month">Month</button>
+    <button data-tab="patterns">Patterns</button>
+  </nav>
+</div>
+
+<div class="sheet-scrim" id="dayScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Day detail" id="daySheet"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  // ---------- content ----------
+  var TEXTURES = [["Bright","light, clear"],["Calm","settled, easy"],["Steady","just okay"],
+    ["Restless","can't settle"],["Overwhelmed","too much coming in"],["Stressed","wound-up"],["Flat","muted, checked-out"]];
+  var TEXTURE_NAMES = TEXTURES.map(function (t) { return t[0]; });
+  var ENERGIES = ["A lot","Some","Low","None"];
+  var VALENCE = { Bright:"pleasant", Calm:"pleasant", Steady:"neutral", Flat:"neutral",
+    Restless:"heavier", Overwhelmed:"heavier", Stressed:"heavier" };
+
+  var INTERP = {
+    "A lot":{Bright:"Firing on all cylinders — lit up and going.",Calm:"Clear and unhurried, with plenty in the tank.",Steady:"Solid and capable — a good, even engine.",Restless:"Wired and agitated — energy with nowhere to go.",Overwhelmed:"Flooded — too much coming in, too fast.",Stressed:"Revved and braced — running hot.",Flat:"Busy on the outside, checked-out underneath."},
+    "Some":{Bright:"A good, easy lightness.",Calm:"Settled and content — quietly okay.",Steady:"A normal, fine day — nothing to report.",Restless:"Understimulated, antsy — itching for a change.",Overwhelmed:"Stretched — a bit more coming in than you'd like.",Stressed:"Wound-up but holding — pressure you're managing.",Flat:"Coasting, a little checked-out."},
+    "Low":{Bright:"Gently glad, but tired — a soft kind of good.",Calm:"Restful, winding down.",Steady:"Quiet and okay, just slow.",Restless:"Tired but can't settle — the restless kind of drained.",Overwhelmed:"Too much, and no reserves to meet it.",Stressed:"Braced on an empty tank — starting to fray.",Flat:"Muted and low — dimmed down."},
+    "None":{Bright:"A flicker of good, but nothing behind it.",Calm:"Spent but peaceful — rested-empty.",Steady:"Okay, but genuinely out of fuel.",Restless:"Wrung out and still buzzing — can't stop, can't go.",Overwhelmed:"Past capacity — everything is too much.",Stressed:"At the edge — braced with nothing left.",Flat:"Shut down — the lights are low."}
+  };
+
+  var WHAT_PROMPTS = ["What happened just before this?","Anything around you feeding this?","What was the last hour like?","What's this sitting on top of?"];
+  var FILL = { "A lot":4, "Some":3, "Low":2, "None":1 };
+
+  var MEDS = [
+    { name:"Vyvanse 30mg", when:"Morning" },
+    { name:"Omega-3", when:"Morning" },
+    { name:"Vitamin D", when:"Morning" },
+    { name:"Magnesium", when:"Evening" }
+  ];
+  var FOOD_SUGGEST = ["Coffee","Water","Breakfast","Lunch","Dinner","Snack","Fruit"];
+
+  var REFLECTIONS = {
+    warm:{ co:"Small thing I noticed — the last 3 days you were Low + Restless, and each one came after a fuller afternoon. Might be nothing. Ring true?", pos:"Nice one — your Bright mornings this week all followed nights in bed before 11. Worth knowing." },
+    minimal:{ co:"Low + Restless, 3 days running — each one after a fuller afternoon.", pos:"Bright mornings this week all followed pre-11 bedtimes." }
+  };
+  var EVIDENCE = {
+    co:{ days:[["Tue","back-to-back calls till 4, no gap to breathe"],["Wed","big errand run after lunch, forgot to eat"],["Thu","afternoon meeting ran long, skipped my walk"]], summary:"Each afternoon was packed — calls, errands, a long meeting — with no real break in it." },
+    pos:{ days:[["Mon","in bed by 10:30, read a little first"],["Wed","early night after a bath — woke up soft, not jarred"],["Fri","down before 11, actually rested"]], summary:"All three followed genuinely early, restful nights." }
+  };
+  var MOCK_NOTES = ["slept badly, pushed through anyway","good walk before the day started","lots of small interruptions","quiet morning, eased into things","skipped lunch, felt it by 3","sun was out, it helped","back-to-back meetings","early night, felt it the next day"];
+  var MOCK_FOOD = [["Coffee","Toast"],["Coffee","Salad","Pasta"],["Tea","Leftovers"],["Coffee","Eggs","Snack"],["Water","Big lunch"]];
+
+  // ---------- state ----------
+  var today = { checkedIn:false, energy:null, texture:null, note:"", meds:{}, customMeds:[], food:[] };
+  var addLane = "morning";
+  var promptIdx = 0;
+  var tasks = [
+    { id:1, text:"Meds + a glass of water", lane:"morning", done:true },
+    { id:2, text:"10-minute tidy", lane:"morning", done:false },
+    { id:3, text:"Therapy call", lane:"timed", time:"14:00", done:false },
+    { id:4, text:"Deep work: the prototype", lane:"afternoon", done:false },
+    { id:5, text:"Walk outside", lane:"afternoon", done:false },
+    { id:6, text:"Proper dinner", lane:"evening", done:false },
+    { id:7, text:"Screens off, wind down", lane:"evening", done:false }
+  ];
+  var taskSeq = 100;
+
+  // ---------- helpers ----------
+  function pad(n) { return n < 10 ? "0"+n : ""+n; }
+  function nowHHMM() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function to12(hhmm) { if (!hhmm) return ""; var p = String(hhmm).split(":"), h = +p[0], m = +p[1], ap = h<12?"am":"pm", hh = h%12; if (hh===0) hh=12; return hh + ":" + pad(m) + ap; }
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  // ---------- build texture grid ----------
+  var grid = $("#textureGrid");
+  TEXTURES.forEach(function (t) {
+    var b = document.createElement("button");
+    b.className = "texture"; b.type = "button"; b.setAttribute("data-texture", t[0]);
+    b.innerHTML = '<span class="name">'+t[0]+'</span><span class="meaning">'+t[1]+'</span>';
+    b.addEventListener("click", function () { today.texture = t[0]; showState(); });
+    grid.appendChild(b);
+  });
+
+  // ---------- Today flow ----------
+  function goStep(name) {
+    $$("[data-view='today'] .step").forEach(function (s) { s.classList.toggle("is-active", s.getAttribute("data-step") === name); });
+    if (name === "home") renderHome();
+    if (name === "meds") renderMeds();
+    if (name === "food") renderFood();
+    window.scrollTo(0, 0);
+  }
+  $$(".energy").forEach(function (btn) { btn.addEventListener("click", function () { today.energy = btn.getAttribute("data-energy"); goStep("texture"); }); });
+  $$("[data-back]").forEach(function (b) { b.addEventListener("click", function () { goStep(b.getAttribute("data-back")); }); });
+  $$("[data-go]").forEach(function (b) { b.addEventListener("click", function () {
+    var to = b.getAttribute("data-go");
+    if (to === "done") { today.note = $("#whatInput").value.trim() || today.note; today.checkedIn = true; }
+    if (to === "meds") { today.note = $("#whatInput").value.trim(); }
+    goStep(to);
+  }); });
+
+  function showState() {
+    $("#stateCombo").innerHTML = today.energy + " energy · " + today.texture;
+    $("#stateRead").textContent = INTERP[today.energy][today.texture];
+    $("#whatInput").value = today.note || "";
+    promptIdx = (promptIdx + 1) % WHAT_PROMPTS.length;
+    $("#whatLabel").textContent = WHAT_PROMPTS[promptIdx];
+    goStep("state");
+  }
+
+  // ---------- meds ----------
+  function medRow(name, isCustom) {
+    var taken = !!today.meds[name];
+    var row = document.createElement("div"); row.className = "med" + (taken ? " taken" : "");
+    var main = document.createElement("button"); main.type = "button"; main.className = "med-main";
+    main.innerHTML = '<span class="box">✓</span><span class="mname">'+esc(name)+'</span>';
+    main.addEventListener("click", function () {
+      if (today.meds[name]) { delete today.meds[name]; if (isCustom) today.customMeds = today.customMeds.filter(function (n) { return n !== name; }); }
+      else { today.meds[name] = nowHHMM(); }
+      renderMeds();
+    });
+    row.appendChild(main);
+    if (taken) {
+      var ti = document.createElement("input"); ti.type = "time"; ti.className = "med-time"; ti.value = today.meds[name];
+      ti.addEventListener("click", function (e) { e.stopPropagation(); });
+      ti.addEventListener("change", function () { today.meds[name] = ti.value || today.meds[name]; });
+      row.appendChild(ti);
+    }
+    return row;
+  }
+  function renderMeds() {
+    var host = $("#medsList"); host.innerHTML = "";
+    ["Morning","Evening"].forEach(function (when) {
+      var lbl = document.createElement("p"); lbl.className = "group-label"; lbl.textContent = when; host.appendChild(lbl);
+      MEDS.filter(function (m) { return m.when === when; }).forEach(function (m) { host.appendChild(medRow(m.name, false)); });
+    });
+    if (today.customMeds.length) {
+      var lbl2 = document.createElement("p"); lbl2.className = "group-label"; lbl2.textContent = "Added"; host.appendChild(lbl2);
+      today.customMeds.forEach(function (name) { host.appendChild(medRow(name, true)); });
+    }
+  }
+  function addMed() {
+    var name = $("#medInput").value.trim(); if (!name) return;
+    if (today.customMeds.indexOf(name) === -1) today.customMeds.push(name);
+    today.meds[name] = $("#medTime").value || nowHHMM();
+    $("#medInput").value = ""; $("#medTime").value = "";
+    renderMeds(); $("#medInput").focus();
+  }
+  $("#medAdd").addEventListener("click", addMed);
+  $("#medInput").addEventListener("keydown", function (e) { if (e.key === "Enter") addMed(); });
+
+  // ---------- food ----------
+  function renderFood() {
+    var sug = $("#foodSuggest"); sug.innerHTML = "";
+    FOOD_SUGGEST.forEach(function (f) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = "+ " + f;
+      b.addEventListener("click", function () { addFood(f); });
+      sug.appendChild(b);
+    });
+    var live = $("#foodLive"); live.innerHTML = "";
+    if (!today.food.length) { live.innerHTML = '<span class="empty-hint">nothing yet — add or skip</span>'; return; }
+    today.food.forEach(function (f, i) {
+      var c = document.createElement("span"); c.className = "fchip";
+      c.innerHTML = esc(f) + ' <button type="button" aria-label="remove">×</button>';
+      c.querySelector("button").addEventListener("click", function () { today.food.splice(i, 1); renderFood(); });
+      live.appendChild(c);
+    });
+  }
+  function addFood(v) { v = (v || "").trim(); if (!v) return; today.food.push(v); renderFood(); }
+  $("#foodAdd").addEventListener("click", function () { addFood($("#foodInput").value); $("#foodInput").value = ""; $("#foodInput").focus(); });
+  $("#foodInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { addFood(this.value); this.value = ""; } });
+
+  // ---------- Today home ----------
+  function renderHome() {
+    var host = $("#todayHome");
+    var d = new Date();
+    var dateStr = d.toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
+    if (!today.checkedIn) {
+      host.innerHTML =
+        '<p class="home-date">'+dateStr+'</p>'+
+        '<h1 class="home-greet">How’s your inner weather?</h1>'+
+        '<div class="checkin-card"><div class="cloud"></div>'+
+        '<h2>Two taps, then whatever else you feel like.</h2>'+
+        '<p>Energy, a texture, and anything worth noting.</p>'+
+        '<button class="btn primary" id="startBtn" type="button">Check in</button></div>';
+      $("#startBtn").addEventListener("click", function () { goStep("energy"); });
+      return;
+    }
+    var allMedNames = MEDS.map(function (m) { return m.name; }).concat(today.customMeds);
+    var medsHtml = allMedNames.map(function (name) {
+      var t = today.meds[name];
+      return '<div class="mini-item"><span class="tick'+(t?'':' off')+'">'+(t?'✓':'')+'</span>'+
+        '<span class="'+(t?'':'muted')+'">'+esc(name)+'</span>'+(t?'<span class="t">'+to12(t)+'</span>':'')+'</div>';
+    }).join("");
+    var foodHtml = today.food.length ? '<div class="food-chips">'+today.food.map(function (f) { return '<span class="fchip">'+esc(f)+'</span>'; }).join("")+'</div>' : '<p class="empty-hint" style="margin:0">nothing logged</p>';
+    var taskHtml = tasks.map(function (t) {
+      return '<div class="mini-item"><span class="tick'+(t.done?'':' off')+'">'+(t.done?'✓':'')+'</span><span class="'+(t.done?'muted':'')+'">'+esc(t.text)+'</span>'+(t.time?'<span class="t">'+to12(t.time)+'</span>':'')+'</div>';
+    }).join("");
+
+    host.innerHTML =
+      '<p class="home-date">'+dateStr+'</p>'+
+      '<h1 class="home-greet">Today</h1>'+
+      '<div class="card"><p class="card-label">Your weather <button class="edit" id="editWeather" type="button">check in again</button></p>'+
+        '<p class="weather-combo">'+today.energy+' energy · '+today.texture+'</p>'+
+        '<p class="weather-read">'+INTERP[today.energy][today.texture]+'</p>'+
+        (today.note ? '<p class="weather-note">“'+esc(today.note)+'”</p>' : '')+
+      '</div>'+
+      '<div class="card"><p class="card-label">Meds &amp; supps</p><div class="mini-list">'+medsHtml+'</div></div>'+
+      '<div class="card"><p class="card-label">Food</p>'+foodHtml+'</div>'+
+      '<div class="card"><p class="card-label">Today’s plan</p><div class="mini-list">'+taskHtml+'</div></div>';
+    $("#editWeather").addEventListener("click", function () { goStep("energy"); });
+  }
+
+  // ---------- Plan ----------
+  var LANES = [ ["timed","Timed","◷"], ["morning","Morning","☀"], ["afternoon","Afternoon","◐"], ["evening","Evening","☾"] ];
+  function renderPlan() {
+    $("#planDate").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
+    var host = $("#lanes"); host.innerHTML = "";
+    LANES.forEach(function (L) {
+      var items = tasks.filter(function (t) { return t.lane === L[0]; });
+      if (L[0] === "timed" && !items.length) return;
+      var lane = document.createElement("div"); lane.className = "lane";
+      lane.innerHTML = '<h3><span class="ic">'+L[2]+'</span>'+L[1]+'</h3>';
+      if (!items.length) { var e = document.createElement("p"); e.className = "empty-hint"; e.textContent = "nothing here — and that's fine"; lane.appendChild(e); }
+      items.sort(function (a, b) { return (a.time||"").localeCompare(b.time||""); });
+      items.forEach(function (t) {
+        var row = document.createElement("div"); row.className = "task" + (t.done ? " done" : "");
+        row.innerHTML = '<span class="box">✓</span>'+(t.time?'<span class="time">'+to12(t.time)+'</span>':'')+'<span class="ttext">'+esc(t.text)+'</span><button class="tmrw" type="button">→ tmrw</button>';
+        row.querySelector(".box").addEventListener("click", function (e) { e.stopPropagation(); t.done = !t.done; renderPlan(); });
+        row.addEventListener("click", function () { t.done = !t.done; renderPlan(); });
+        row.querySelector(".tmrw").addEventListener("click", function (e) { e.stopPropagation(); tasks = tasks.filter(function (x) { return x.id !== t.id; }); renderPlan(); });
+        lane.appendChild(row);
+      });
+      host.appendChild(lane);
+    });
+  }
+  $$("#lanePick button").forEach(function (b) { b.addEventListener("click", function () {
+    addLane = b.getAttribute("data-lane");
+    $$("#lanePick button").forEach(function (o) { o.classList.toggle("on", o === b); });
+    $("#taskTime").classList.toggle("hide", addLane !== "timed");
+  }); });
+  function addTask(v) {
+    v = (v || "").trim(); if (!v) return;
+    var t = { id:++taskSeq, text:v, lane:addLane, done:false };
+    if (addLane === "timed") t.time = $("#taskTime").value || "";
+    tasks.push(t); $("#taskTime").value = ""; renderPlan();
+  }
+  $("#taskAdd").addEventListener("click", function () { addTask($("#taskInput").value); $("#taskInput").value = ""; $("#taskInput").focus(); });
+  $("#taskInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { addTask(this.value); this.value = ""; } });
+
+  // ---------- Month ----------
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function mockDay(day) {
+    return { energy: ENERGIES[(day*5+1) % 4], texture: TEXTURE_NAMES[(day*3+2) % 7], meds: (day % 5) !== 0 };
+  }
+  function dayEntry(day, isToday) {
+    if (isToday) {
+      if (!today.checkedIn) return null;
+      return { energy: today.energy, texture: today.texture, meds: MEDS.some(function (m) { return today.meds[m.name]; }),
+        note: today.note, food: today.food.slice() };
+    }
+    var m = mockDay(day);
+    m.note = MOCK_NOTES[day % MOCK_NOTES.length];
+    m.food = MOCK_FOOD[day % MOCK_FOOD.length];
+    return m;
+  }
+  function renderMonth() {
+    var now = new Date(), y = now.getFullYear(), mo = now.getMonth(), td = now.getDate();
+    $("#monthName").textContent = MONTHS[mo]; $("#monthYear").textContent = y;
+    var first = new Date(y, mo, 1).getDay(), dim = new Date(y, mo+1, 0).getDate();
+    var cal = $("#cal"); cal.innerHTML = "";
+    ["S","M","T","W","T","F","S"].forEach(function (d) { var h = document.createElement("div"); h.className = "dow"; h.textContent = d; cal.appendChild(h); });
+    for (var b = 0; b < first; b++) { var bl = document.createElement("div"); bl.className = "cell blank"; cal.appendChild(bl); }
+    for (var day = 1; day <= dim; day++) {
+      var cell = document.createElement("div"); cell.className = "cell";
+      var isToday = day === td, future = day > td;
+      var entry = (!future) ? dayEntry(day, isToday) : null;
+      if (isToday) cell.classList.add("today");
+      if (entry) {
+        cell.classList.add("has", VALENCE[entry.texture]);
+        cell.innerHTML = day + (entry.meds ? '<span class="md"></span>' : '');
+        (function (dd, isT) { cell.addEventListener("click", function () { openDay(dd, isT); }); })(day, isToday);
+      } else {
+        cell.classList.add("empty");
+        cell.textContent = day;
+      }
+      cal.appendChild(cell);
+    }
+  }
+  function openDay(day, isToday) {
+    var e = dayEntry(day, isToday); if (!e) return;
+    var now = new Date();
+    var ds = new Date(now.getFullYear(), now.getMonth(), day).toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
+    var medHtml = MEDS.map(function (m) {
+      var on = isToday ? !!today.meds[m.name] : e.meds;
+      return '<div class="mini-item"><span class="tick'+(on?'':' off')+'">'+(on?'✓':'')+'</span><span class="'+(on?'':'muted')+'">'+m.name+'</span></div>';
+    }).join("");
+    var foodHtml = (e.food && e.food.length) ? '<div class="food-chips">'+e.food.map(function (f) { return '<span class="fchip">'+esc(f)+'</span>'; }).join("")+'</div>' : '<p class="empty-hint" style="margin:0">nothing logged</p>';
+    $("#daySheet").innerHTML =
+      '<p class="sheet-combo">'+e.energy+' energy · '+e.texture+'</p>'+
+      '<p class="sheet-read">'+INTERP[e.energy][e.texture]+'</p>'+
+      '<p class="sheet-date">'+ds+(isToday?' · today':'')+'</p>'+
+      (e.note ? '<p class="weather-note" style="margin-top:0">“'+esc(e.note)+'”</p>' : '')+
+      '<div class="sheet-sec"><p class="card-label">Meds &amp; supps</p><div class="mini-list">'+medHtml+'</div></div>'+
+      '<div class="sheet-sec"><p class="card-label">Food</p>'+foodHtml+'</div>'+
+      '<button class="btn primary" id="dayClose" type="button" style="width:100%;margin-top:18px">Close</button>';
+    $("#daySheet").querySelector("#dayClose").addEventListener("click", closeDay);
+    $("#dayScrim").classList.add("open");
+  }
+  function closeDay() { $("#dayScrim").classList.remove("open"); }
+  $("#dayScrim").addEventListener("click", function (e) { if (e.target === $("#dayScrim")) closeDay(); });
+
+  // ---------- Patterns ----------
+  function setVoice(mode) {
+    $("#reflCo").textContent = REFLECTIONS[mode].co;
+    $("#reflPos").textContent = REFLECTIONS[mode].pos;
+    $$(".voice-toggle button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-voice") === mode); });
+  }
+  $$(".voice-toggle button").forEach(function (b) { b.addEventListener("click", function () { setVoice(b.getAttribute("data-voice")); }); });
+  setVoice("warm");
+  function renderEvidence(card) {
+    var key = card.getAttribute("data-ev"), mode = $(".ev-toggle button.on", card).getAttribute("data-ev-mode"), data = EVIDENCE[key], body = $(".ev-body", card);
+    if (mode === "summary") { body.innerHTML = '<p class="ev-summary">'+data.summary+'</p><p class="ev-note">A summary like this comes with the later AI layer — the raw notes are v1.</p>'; }
+    else { body.innerHTML = data.days.map(function (d) { return '<div class="ev-day"><span class="d">'+d[0]+'</span><span class="n">“'+d[1]+'”</span></div>'; }).join(""); }
+  }
+  $$(".evidence").forEach(function (card) {
+    $$(".ev-toggle button", card).forEach(function (b) { b.addEventListener("click", function () { $$(".ev-toggle button", card).forEach(function (o) { o.classList.toggle("on", o === b); }); renderEvidence(card); }); });
+    renderEvidence(card);
+  });
+  $$(".refl-afford .mini:not(.dismiss)").forEach(function (b) { b.addEventListener("click", function () { $$(".mini:not(.dismiss)", b.parentNode).forEach(function (s) { s.classList.toggle("sel", s === b); }); }); });
+  $$(".refl-afford .mini.dismiss").forEach(function (b) { b.addEventListener("click", function () { b.closest(".refl-card").style.opacity = "0.4"; b.textContent = "Okay — hidden"; }); });
+
+  // ---------- tabs ----------
+  $$(".tabbar button").forEach(function (btn) { btn.addEventListener("click", function () {
+    var tab = btn.getAttribute("data-tab");
+    $$(".tabbar button").forEach(function (b) { b.classList.toggle("on", b === btn); });
+    $$(".view").forEach(function (v) { v.classList.toggle("is-active", v.getAttribute("data-view") === tab); });
+    if (tab === "today") goStep(isMidFlow() ? currentTodayStep() : "home");
+    if (tab === "plan") renderPlan();
+    if (tab === "month") renderMonth();
+    window.scrollTo(0, 0);
+  }); });
+  function currentTodayStep() { var a = $("[data-view='today'] .step.is-active"); return a ? a.getAttribute("data-step") : "home"; }
+  function isMidFlow() { var s = currentTodayStep(); return s !== "home" && s !== "done"; }
+
+  // ---------- theme ----------
+  $("#themeBtn").addEventListener("click", function () {
+    var root = document.documentElement, cur = root.getAttribute("data-theme");
+    if (!cur) { cur = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light"; }
+    root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+  $("#hintClose").addEventListener("click", function () { $("#hint").style.display = "none"; });
+
+  // ---------- init ----------
+  renderHome();
+})();
+</script>
