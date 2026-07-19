@@ -4,12 +4,23 @@ node_modules/
 # Next.js
 .next/
 out/
+build/
 next-env.d.ts
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Certs
+*.pem
 
 # Testing
 test-results/
 playwright-report/
 coverage/
+
+# Local scratch screenshots (not committed)
+screenshots/
 
 # Storybook
 storybook-static/
