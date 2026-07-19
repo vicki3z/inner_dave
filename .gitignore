@@ -19,6 +19,9 @@ test-results/
 playwright-report/
 coverage/
 
+# Local scratch screenshots (not committed)
+screenshots/
+
 # Storybook
 storybook-static/
 
