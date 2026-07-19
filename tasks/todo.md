@@ -20,7 +20,7 @@ Connect this folder to `github.com/vicki3z/inner_dave.git` and push what we have
 - **Verify:** open the page; run `pnpm typecheck`.
 - **Learn:** App Router folder layout; Server vs Client Components.
 
-### ☐ P0.3 — Biome (lint + format)
+### ☑ P0.3 — Biome (lint + format)
 - **Do:** add Biome + `biome.json`; scripts `lint` (check) and `format` (write); remove any stray ESLint config.
 - **Accept:** `pnpm lint` and `pnpm format` run clean on the scaffold.
 - **Verify:** run both; introduce a bad format, confirm `format` fixes it.
